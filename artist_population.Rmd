@@ -1,0 +1,47 @@
+---
+title: "Ethnicity of Artists vs Population"
+author: "Shiyu Murashima"
+date: "`r format(Sys.Date(), '%D')`"
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: '4'
+  html_document:
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+    code_folding: show
+---
+
+```{r}
+path <- 'https://raw.githubusercontent.com/artofstat/ArtistDiversity/master/artistdata.csv'
+artists <- read.csv(path)
+nyc_dem <- read.csv("/Users/ShiyuMurashima/Downloads/nyc_demographic.csv")
+nyc_dem <- nyc_dem[10:17, -c(2, 4)]
+```
+
+```{r}
+table(artists$ethnicity)
+nyc_dem
+```
+
+```{r}
+Ethnicity <- c("White", "Asian", "Black", "Hispanic", "Other")
+MoMA <- c(0.858486, 0.08425747, 0.01482642, 0.0277242, 0.01470588)
+NYC <- c(0.41, 0.143, 0.238, 0.289, 0.05)
+merged <- data.frame(Ethnicity, MoMA, NYC)
+```
+
+```{r}
+library(ggplot2)
+library(reshape2)
+merged2 <- melt(merged, id.vars='Ethnicity')
+
+ggplot(merged2, aes(x=Ethnicity, y=value, fill=variable)) +
+  geom_bar(stat='identity', position='dodge') +
+  facet_wrap(~ variable) +
+  labs(x = "Ethnicity", y = "Proportion") +
+  ggtitle("Ethnicities of MoMA Artists vs NYC Population") +
+  scale_fill_manual("variable", values = c("MoMA" = "#48b0e7", "NYC" = "#f3a991"))
+```
+
