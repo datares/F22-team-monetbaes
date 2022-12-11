@@ -1,0 +1,131 @@
+---
+title: "MonetBaes"
+author: "Emma Chi"
+date: "2022-10-31"
+output: pdf_document
+---
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(tidy=TRUE)
+knitr::opts_chunk$set(tidy.opts=list(width.cutoff=70))
+
+library(dplyr)
+```
+
+Load data 
+```{r}
+path <- 'https://raw.githubusercontent.com/artofstat/ArtistDiversity/master/artistdata.csv'
+artists <- read.csv(path)
+```
+
+```{r}
+# Overall number of artists across all museums:
+artists %>%  summarize(size=n()) 
+
+# Number of artists in each museum: 
+artists %>%  group_by(museum) %>% summarize(size=n()) 
+#Overall unique number of artists after removing duplicates:
+artists.unique <- artists %>% distinct(artist, .keep_all = TRUE)
+head(artists.unique)
+artists.unique %>%  summarize(size=n()) 
+```
+
+```{r}
+# Ethnicity Distribution:
+table(artists.unique$ethnicity, useNA="always")
+round(prop.table(table(artists.unique$ethnicity)),3)
+# Simultaneous Score Confidence Intervals:
+nums <- unlist(table(artists.unique$ethnicity))
+sapply(nums, function(x) prop.test(x, sum(nums), correct=FALSE, conf.level = 1-0.05/5)$conf.int)
+```
+vector order: asian, black, hispanic, white, other
+```{r}
+# Ethnicity Distribution when only including artists born before the 1600s:
+ethnicity.16 <- artists.unique %>% filter(year<16) %>% select(ethnicity)
+table(ethnicity.16,useNA="always")
+round(prop.table(table(ethnicity.16)),3)
+
+ethn.16 <- c(0.074, 0, 0.015, 0.904, 0.006)
+```
+
+
+```{r}
+# Ethnicity Distribution when only including artists born from 1600-1700:
+ethnicity.17 <- artists.unique %>% filter(year==c(1600, 1700)) %>% select(ethnicity)
+table(ethnicity.17,useNA="always")
+round(prop.table(table(ethnicity.17)),3)
+
+ethn.17 <- c(0.109, 0, 0.065, 0.826, 0)
+```
+
+```{r}
+# Ethnicity Distribution when only including artists born from 1700-1800:
+ethnicity.18 <- artists.unique %>% filter(year==c(1700, 1800)) %>% select(ethnicity)
+table(ethnicity.18,useNA="always")
+round(prop.table(table(ethnicity.18)),3)
+
+ethn.18 <- c(0.071, 0, 0, 0.929, 0)
+```
+
+```{r}
+# Ethnicity Distribution when only including artists born from 1800-1900:
+ethnicity.19 <- artists.unique %>% filter(year==c(1800, 1900)) %>% select(ethnicity)
+table(ethnicity.19,useNA="always")
+round(prop.table(table(ethnicity.19)),3)
+
+ethn.19 <- c(0.072, 0.021, 0.046, 0.861, 0)
+```
+
+```{r}
+# Ethnicity Distribution when only including artists born from 1900-1950:
+ethnicity.19.5 <- artists.unique %>% filter(year==c(1900, 1950)) %>% select(ethnicity)
+table(ethnicity.19.5,useNA="always")
+round(prop.table(table(ethnicity.19.5)),3)
+
+ethn.19.5 <- c(0.068, 0.017, 0.047, 0.839, 0)
+```
+
+```{r}
+# Ethnicity Distribution when only including artists born from 1950-2020:
+ethnicity.20 <- artists.unique %>% filter(year==c(1950, 2020)) %>% select(ethnicity)
+table(ethnicity.20,useNA="always")
+round(prop.table(table(ethnicity.20)),3)
+
+ethn.20 <- c(0.082, 0.017, 0.030, 0.841, 0.030)
+```
+
+```{r}
+ethnicity <- c(ethn.16, ethn.17, ethn.18, ethn.19, ethn.19.5, ethn.20)
+ethnicity
+
+time.period <- c("before 1600", "1600-1700",
+                               "1700-1800","1800-1900", "1900-1950", "1950-2020")
+```
+
+```{r}
+pdf("visualization.pdf", width=18, height=15)
+
+gfg <- data.frame(ethnicity, 
+                   grp = rep(time.period, each = 5),
+                   subgroup = LETTERS[1:5])
+
+gfg <- reshape(gfg,idvar = "subgroup",
+               timevar = "grp",
+               direction = "wide")
+  
+row.names(gfg) <- gfg$subgroup
+gfg <- gfg[ , 2:ncol(gfg)]
+colnames(gfg) <- time.period
+gfg <- as.matrix(gfg)
+
+color <- colorRampPalette(colors = c("yellow", "blue"))(5)
+
+# Create grouped barplot
+barplot(height = gfg,beside = TRUE, ylim = c(0,1), xlab = "Time Period", ylab = "Proportion", 
+        main = "Distribution of Artists' Ethnicities in Major U.S. Museums Over Time", col = color, 
+        legend=c("Asian", "Black","Hispanic","White","Other"))
+
+dev.off() 
+```
+

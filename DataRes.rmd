@@ -1,0 +1,62 @@
+---
+title: "DataRes"
+author: "Isabel Tao"
+date: '2022-11-01'
+output: html_document
+---
+
+gender distribution for various museums
+
+General
+```{r}
+#Load artist datafile
+path <- 'https://raw.githubusercontent.com/artofstat/ArtistDiversity/master/artistdata.csv'
+artists <- read.csv(path)
+head(artists)
+library(dplyr)
+#Number of artists in all museums
+artists %>% summarize(size=n()) 
+#Number of artists in each museum
+artists %>% group_by(museum) %>% summarize(size=n()) #May want to plot in the future
+#Overall unique number of artists, after removing duplicates:
+artists.unique <- artists %>% distinct(artist, .keep_all = TRUE)
+artists.unique %>% summarize(size=n()) 
+### Overall statistics
+# Gender Distribution:
+table(artists.unique$gender, useNA="always")
+round(prop.table(table(artists.unique$gender)),3)
+```
+
+Gender specific analyses
+```{r}
+library(ggplot2)
+
+genderdf <- artists %>% select(museum, gender) %>% group_by(museum) %>% 
+summarize(men=sum(gender=="man", na.rm=TRUE), 
+          women=sum(gender=="woman", na.rm=TRUE),
+          total=men+women,
+          prop.women=women/total, 
+          LB=prop.test(women,total, correct=FALSE, conf.level = 1-0.05/18)$conf.int[1], 
+          UB=prop.test(women,total, correct=FALSE, conf.level = 1-0.05/18)$conf.int[2]
+          )
+genderdf$padj <- NA
+for (i in 1:18) {
+  genderdf$padj[i] <- prop.test(c(genderdf$women[i], sum(genderdf$women[-i])), c(genderdf$total[i], sum(genderdf$total[-i])), correct=FALSE)$p.value * 18
+}
+genderdf
+
+genderdf$men
+
+genderdf2 <- rbind(
+        data.frame(genderdf$museum, "count" = genderdf$men, "type"="men"),
+        data.frame(genderdf$museum, "count" = genderdf$women, "type"="women")
+        )
+
+ggplot(genderdf2, aes(x=genderdf.museum, y=count, fill = type)) + scale_fill_manual(values=c("cornflowerblue", "coral1")) + geom_bar(stat="identity") + ggtitle("Distribution of Genders in Various U.S. Museums") + labs(y= "Number of Artists", x = "U.S. Museums") + scale_x_discrete(labels=c('Chicago', 'Dallas', 'Denver', 'Detroit', 'High', 'LACMA', 'The Met', 'Contemporary', 'Boston', 'Houston', 'MOMA', 'National Gallery', 'Nelson-Atkins', 'Philadelphia', 'Rhode Island', 'San Francisco', 'Whitney', 'Yale')) + theme(axis.text.x=element_text(size=7))
+```
+
+
+
+
+
+
