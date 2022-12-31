@@ -16,7 +16,7 @@ output:
 ```{r}
 path <- 'https://raw.githubusercontent.com/artofstat/ArtistDiversity/master/artistdata.csv'
 artists <- read.csv(path)
-nyc_dem <- read.csv("/Users/ShiyuMurashima/Downloads/nyc_demographic.csv")
+nyc_dem <- read.csv("nyc_demographic.csv")
 nyc_dem <- nyc_dem[10:17, -c(2, 4)]
 ```
 
